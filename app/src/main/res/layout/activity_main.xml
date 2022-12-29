@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    tools:context=".MainActivity">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/main_tv_deviceInfo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Device Info..."
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/main_tv_file"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Location of Log Files: "
+                android:textColor="#F44336"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/main_btn_save"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="stopLogging"
+                android:text="Stop Background Logging" />
+
+            <Button
+                android:id="@+id/main_btn_share"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="setBtn_share"
+                android:text="Share Log Files" />
+
+            <TextView
+                android:id="@+id/main_tv_guide"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="20dp"
+                android:text="@string/guide"
+                android:textSize="14sp" />
+
+            <Button
+                android:id="@+id/btn_startBrowser"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="startBrower"
+                android:text="Click here to know more and to apply neccessary settings" />
+
+            <Button
+                android:id="@+id/excel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Click Here to upload excel Sheet" />
+        </LinearLayout>
+
+    </ScrollView>
+</LinearLayout>
