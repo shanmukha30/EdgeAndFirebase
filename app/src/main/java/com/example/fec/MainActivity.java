@@ -1,5 +1,11 @@
 package com.example.fec;
 
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Environment;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 import androidx.work.Configuration;
@@ -7,12 +13,7 @@ import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -25,13 +26,16 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-public class MainActivity extends AppCompatActivity {
+import static android.util.Log.e;
 
+public class MainActivity extends AppCompatActivity {
     TextView tv_info,tv_fileLocation,tv_guide;
     Button btn_stop,btn_share,btn_browser;
     SharedPreferences sp;
-    Map<String,?> deviceInfoMap;
+    Map<String,?>  deviceInfoMap;
     public  boolean isDeviceInfoFileWritten=false;
+    public static final int cellCount=2;
+    Button excel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
         tv_fileLocation=(TextView)findViewById(R.id.main_tv_file);
         tv_guide=(TextView)findViewById(R.id.main_tv_guide);
         tv_guide.setText(R.string.guide);
-
+        excel = (Button) findViewById(R.id.excel);
         btn_browser.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -54,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         sp=getSharedPreferences("Device_Info",MODE_PRIVATE);
-        String brand= Build.BRAND;
+        String brand=Build.BRAND;
         SharedPreferences.Editor editor= sp.edit();
         editor.putString("Brand",Build.BRAND);
         editor.putString("Device",Build.DEVICE);
@@ -74,6 +78,7 @@ public class MainActivity extends AppCompatActivity {
             writetofile();
 
         startLogging();
+
     }
 
     void displayDeviceInfo()
@@ -121,8 +126,10 @@ public class MainActivity extends AppCompatActivity {
         File directory=new File(getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS),"DeviceInfo");
         File infoFile=new File(directory,"deviceInfoFile.txt");
         File logFile=new File(directory,"deviceLogFile.csv");
-        Uri infoFileUri= FileProvider.getUriForFile(this,"com.demo.logger.MainActivity",infoFile);
-        Uri logFileUri= FileProvider.getUriForFile(this,"com.demo.logger.MainActivity",logFile);
+        Uri infoFileUri= FileProvider.getUriForFile(this,"com.example.fec.MainActivity",infoFile);
+        grantUriPermission("com.example.fec", infoFileUri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        Uri logFileUri= FileProvider.getUriForFile(this,"com.example.fec.MainActivity",logFile);
+        grantUriPermission("com.example.fec", logFileUri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
         ArrayList<Uri> fileUri=new ArrayList<Uri>();
         fileUri.add(infoFileUri);

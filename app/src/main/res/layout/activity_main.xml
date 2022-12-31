@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
+    android:layout_height="match_parent"
     tools:context=".MainActivity">
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -20,56 +22,91 @@
                 android:id="@+id/main_tv_deviceInfo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
+                android:fontFamily="@font/asul"
                 android:text="Device Info..."
                 android:textSize="18sp"
-                android:textStyle="bold" />
+                android:textStyle="normal" />
 
             <TextView
                 android:id="@+id/main_tv_file"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
                 android:layout_marginTop="20dp"
+                android:layout_marginRight="5dp"
+                android:layout_marginBottom="10dp"
+                android:fontFamily="@font/asul"
                 android:text="Location of Log Files: "
-                android:textColor="#F44336"
+                android:textAlignment="viewStart"
+                android:textColor="#C4801D"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
             <Button
                 android:id="@+id/main_btn_save"
+                style="@android:style/Widget.Button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginRight="5dp"
+                android:fontFamily="@font/asul"
                 android:onClick="stopLogging"
-                android:text="Stop Background Logging" />
+                android:paddingLeft="20dp"
+                android:paddingRight="20dp"
+                android:text="Stop Background Logging"
+                android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
 
             <Button
                 android:id="@+id/main_btn_share"
+                style="@android:style/Widget.Button"
+                android:fontFamily="@font/asul"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
                 android:onClick="setBtn_share"
-                android:text="Share Log Files" />
+                android:text="Share Log Files"
+                android:textAppearance="@style/TextAppearance.AppCompat.Medium"/>
+
+            <Button
+                android:id="@+id/excel"
+                style="@android:style/Widget.Button"
+                android:fontFamily="@font/asul"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
+                android:text="Click Here to upload excel Sheet"
+                android:textAppearance="@style/TextAppearance.AppCompat.Medium"/>
 
             <TextView
                 android:id="@+id/main_tv_guide"
+                android:fontFamily="@font/asul"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:layout_marginBottom="20dp"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
                 android:text="@string/guide"
                 android:textSize="14sp" />
 
             <Button
                 android:id="@+id/btn_startBrowser"
+                android:fontFamily="@font/asul"
+                style="@android:style/Widget.Button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
                 android:onClick="startBrower"
-                android:text="Click here to know more and to apply neccessary settings" />
+                android:text="Click here to know more and to apply neccessary settings"
+                android:textAppearance="@style/TextAppearance.AppCompat.Medium"/>
 
-            <Button
-                android:id="@+id/excel"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Click Here to upload excel Sheet" />
         </LinearLayout>
 
     </ScrollView>
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
