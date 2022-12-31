@@ -127,9 +127,7 @@ public class MainActivity extends AppCompatActivity {
         File infoFile=new File(directory,"deviceInfoFile.txt");
         File logFile=new File(directory,"deviceLogFile.csv");
         Uri infoFileUri= FileProvider.getUriForFile(this,"com.example.fec.MainActivity",infoFile);
-        grantUriPermission("com.example.fec", infoFileUri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
         Uri logFileUri= FileProvider.getUriForFile(this,"com.example.fec.MainActivity",logFile);
-        grantUriPermission("com.example.fec", logFileUri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
         ArrayList<Uri> fileUri=new ArrayList<Uri>();
         fileUri.add(infoFileUri);
