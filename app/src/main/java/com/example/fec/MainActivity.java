@@ -1,17 +1,22 @@
 package com.example.fec;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.work.Configuration;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
+import android.app.AlertDialog;
 
 import android.os.Bundle;
 import android.util.Log;
@@ -19,14 +24,22 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.provider.Settings;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.List;
 
 import static android.util.Log.e;
+
+import com.karumi.dexter.Dexter;
+import com.karumi.dexter.MultiplePermissionsReport;
+import com.karumi.dexter.PermissionToken;
+import com.karumi.dexter.listener.PermissionRequest;
+import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 
 public class MainActivity extends AppCompatActivity {
     TextView tv_info,tv_fileLocation,tv_guide;
@@ -41,6 +54,15 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        requestPermissions();
+
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+            int temp = 0;
+        }
+        else {
+            ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},1);
+        }
 
         tv_info=(TextView)findViewById(R.id.main_tv_deviceInfo);
         btn_share=(Button)findViewById(R.id.main_btn_share);
@@ -127,7 +149,10 @@ public class MainActivity extends AppCompatActivity {
         File infoFile=new File(directory,"deviceInfoFile.txt");
         File logFile=new File(directory,"deviceLogFile.csv");
         Uri infoFileUri= FileProvider.getUriForFile(this,"com.example.fec.MainActivity",infoFile);
+        this.grantUriPermission("com.example.fec",infoFileUri,Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         Uri logFileUri= FileProvider.getUriForFile(this,"com.example.fec.MainActivity",logFile);
+        this.grantUriPermission("com.example.fec",logFileUri,Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+
 
         ArrayList<Uri> fileUri=new ArrayList<Uri>();
         fileUri.add(infoFileUri);
@@ -164,4 +189,64 @@ public class MainActivity extends AppCompatActivity {
         WorkManager.getInstance(getApplicationContext()).cancelUniqueWork("LOGWORK");
         Toast.makeText(this,"Logging stopped. Restart app to begin logging again",Toast.LENGTH_SHORT).show();
     }
+
+    private void requestPermissions() {
+        // below line is use to request permission in the current activity.
+        // this method is use to handle error in runtime permissions
+        Dexter.withActivity(this)
+                .withPermissions(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.ACCESS_FINE_LOCATION)
+                .withListener(new MultiplePermissionsListener() {
+                    @Override
+                    public void onPermissionsChecked(MultiplePermissionsReport multiplePermissionsReport) {
+                        // this method is called when all permissions are granted
+                        if (multiplePermissionsReport.areAllPermissionsGranted()) {
+                            // do you work now
+                            Toast.makeText(MainActivity.this, "All the permissions are granted..", Toast.LENGTH_SHORT).show();
+                        }
+                        // check for permanent denial of any permission
+                        if (multiplePermissionsReport.isAnyPermissionPermanentlyDenied()) {
+                            // permission is denied permanently, we will show user a dialog message.
+                            showSettingsDialog();
+                        }
+                    }
+                    @Override
+                    public void onPermissionRationaleShouldBeShown(List<PermissionRequest> list, PermissionToken permissionToken) {
+                        // this method is called when user grants some permission and denies some of them.
+                        permissionToken.continuePermissionRequest();
+                    }
+                }).withErrorListener(error -> {
+                    // we are displaying a toast message for error message.
+                    Toast.makeText(getApplicationContext(), "Error occurred! ", Toast.LENGTH_SHORT).show();
+                })
+                // below line is use to run the permissions on same thread and to check the permissions
+                .onSameThread().check();
+    }
+    private void showSettingsDialog() {
+        // we are displaying an alert dialog for permissions
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+
+        // below line is the title for our alert dialog.
+        builder.setTitle("Need Permissions");
+
+        // below line is our message for our dialog
+        builder.setMessage("This app needs permission to use this feature. You can grant them in app settings.");
+        builder.setPositiveButton("GOTO SETTINGS", (dialog, which) -> {
+            // this method is called on click on positive button and on clicking shit button
+            // we are redirecting our user from our app to the settings page of our app.
+            dialog.cancel();
+            // below is the intent from which we are redirecting our user.
+            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+            Uri uri = Uri.fromParts("package", getPackageName(), null);
+            intent.setData(uri);
+            startActivityForResult(intent, 101);
+        });
+        builder.setNegativeButton("Cancel", (dialog, which) -> {
+            // this method is called when user click on negative button.
+            dialog.cancel();
+        });
+        // below line is used to display our dialog
+        builder.show();
+    }
+
+
 }
