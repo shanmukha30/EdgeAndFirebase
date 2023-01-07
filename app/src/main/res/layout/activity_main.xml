@@ -74,13 +74,14 @@
             <Button
                 android:id="@+id/excel"
                 style="@android:style/Widget.Button"
-                android:fontFamily="@font/asul"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="5dp"
                 android:layout_marginRight="5dp"
+                android:fontFamily="@font/asul"
+                android:onClick="setBtn_uploadExcel"
                 android:text="Click Here to upload excel Sheet"
-                android:textAppearance="@style/TextAppearance.AppCompat.Medium"/>
+                android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
 
             <TextView
                 android:id="@+id/main_tv_guide"

@@ -25,6 +25,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.provider.Settings;
+import androidx.annotation.NonNull;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -35,20 +36,33 @@ import java.util.List;
 
 import static android.util.Log.e;
 
+import com.google.firebase.FirebaseApp;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.MultiplePermissionsReport;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.StorageMetadata;
+import com.google.firebase.storage.UploadTask;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.auth.AuthResult;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnCompleteListener;
+
 public class MainActivity extends AppCompatActivity {
     TextView tv_info,tv_fileLocation,tv_guide;
-    Button btn_stop,btn_share,btn_browser;
+    Button btn_stop,btn_share,btn_browser,btn_uploadExcel;
     SharedPreferences sp;
     Map<String,?>  deviceInfoMap;
     public  boolean isDeviceInfoFileWritten=false;
     public static final int cellCount=2;
-    Button excel;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +70,51 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         requestPermissions();
+
+        // Initialize Firebase Auth
+        FirebaseAuth mAuth = FirebaseAuth.getInstance();
+
+        FirebaseUser user = mAuth.getCurrentUser();
+
+        mAuth.signInAnonymously().addOnSuccessListener(this, new  OnSuccessListener<AuthResult>() {
+                    @Override
+                    public void onSuccess(AuthResult authResult) {
+                        Log.d("Topper", "signInAnonymously:success");
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        updateUI(user);
+                    }
+                })
+                .addOnFailureListener(this, new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception exception) {
+
+                        Log.e("Chutiya", "signInAnonymously:FAILURE", exception);
+                        Toast.makeText(MainActivity.this, "Authentication failed.",
+                                Toast.LENGTH_SHORT).show();
+                        updateUI(null);
+                    }
+                });
+
+        /*mAuth.signInAnonymously()
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            // Sign in success, update UI with the signed-in user's information
+                            Log.d(TAG, "signInAnonymously:success");
+                            FirebaseUser user = mAuth.getCurrentUser();
+                            updateUI(user);
+                        } else {
+                            // If sign in fails, display a message to the user.
+                            Log.w(TAG, "signInAnonymously:failure", task.getException());
+                            Toast.makeText(AnonymousAuthActivity.this, "Authentication failed.",
+                                    Toast.LENGTH_SHORT).show();
+                            updateUI(null);
+                        }
+                    }
+                });*/
+
+
 
         /*if(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
             int temp = 0;
@@ -71,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
         tv_fileLocation=(TextView)findViewById(R.id.main_tv_file);
         tv_guide=(TextView)findViewById(R.id.main_tv_guide);
         tv_guide.setText(R.string.guide);
-        excel = (Button) findViewById(R.id.excel);
+        btn_uploadExcel = (Button) findViewById(R.id.excel);
         btn_browser.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -119,20 +178,22 @@ public class MainActivity extends AppCompatActivity {
 
     void writetofile()
     {
-        String filename="deviceInfoFile.txt";
+        String filename="deviceInfoFile.csv";
         String filecontent=deviceInfoMap.toString();
         System.out.println(filecontent);
         SharedPreferences sp=getSharedPreferences("Device_Info",MODE_PRIVATE);
         SharedPreferences.Editor editor=sp.edit();
-        File file=new File(getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS),"DeviceInfo");
-        if(!file.mkdirs())
-            Log.e("Error: ","Directory not created");
+        File dirDown = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        File file = new File(dirDown, "DeviceInfo");
+        file.mkdirs();
+
         FileOutputStream outputStream;
         try{
             File file1=new File(file,filename);
             outputStream=new FileOutputStream(file1);
             outputStream.write(filecontent.getBytes());
             outputStream.close();
+            isDeviceInfoFileWritten = true;
             editor.putString("Device Info Logged","true");
             Toast.makeText(this,"Device Info logged to:"+String.valueOf(file1),Toast.LENGTH_LONG).show();
             //isDeviceInfoFileWritten=true;
@@ -145,8 +206,9 @@ public class MainActivity extends AppCompatActivity {
 
     public void setBtn_share(View v)
     {
-        File directory=new File(getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS),"DeviceInfo");
-        File infoFile=new File(directory,"deviceInfoFile.txt");
+        File dirDown = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        File directory = new File(dirDown, "DeviceInfo");
+        /*File infoFile=new File(directory,"deviceInfoFile.txt");
         File logFile=new File(directory,"deviceLogFile.csv");
         Uri infoFileUri= FileProvider.getUriForFile(this,"com.example.fec.MainActivity",infoFile);
         this.grantUriPermission("com.example.fec",infoFileUri,Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
@@ -162,8 +224,59 @@ public class MainActivity extends AppCompatActivity {
         shareIntent.setAction(Intent.ACTION_SEND_MULTIPLE);
         shareIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM,fileUri);
         shareIntent.setType("text/*");
-        startActivity(Intent.createChooser(shareIntent,"Send files..."));
+        startActivity(Intent.createChooser(shareIntent,"Send files..."));*/
+        File file = new File(directory, "deviceLogFile.csv");
+
+        Intent shareIntent = new Intent();
+        shareIntent.setAction(Intent.ACTION_SEND);
+        shareIntent.putExtra(Intent.EXTRA_STREAM, FileProvider.getUriForFile(this, "com.example.fec.MainActivity", file));
+        shareIntent.setType("text/csv");
+        startActivity(Intent.createChooser(shareIntent, "Share file using"));
+
     }
+
+    public void setBtn_uploadExcel(View v)
+    {
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        File dirDown = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        File dir = new File(dirDown, "DeviceInfo");
+        File file = new File(dir, "deviceLogFile.csv");
+
+        StorageReference storageRef = storage.getReference();
+
+        // Create a reference to "mountains.jpg"
+        StorageReference deviceLogFileRef = storageRef.child("deviceLogFile.csv");
+
+        // Create a reference to 'images/mountains.jpg'
+        StorageReference filesRef = storageRef.child("files/deviceLogFile.csv");
+
+        deviceLogFileRef.getName().equals(filesRef.getName());
+        deviceLogFileRef.getPath().equals(filesRef.getPath());
+
+
+
+        // Create the file metadata
+        StorageMetadata metadata = new StorageMetadata.Builder()
+                .setContentType("text/csv")
+                .build();
+        // Upload the file to Firebase
+        UploadTask uploadTask = filesRef.putFile(Uri.fromFile(file), metadata);
+
+        // Register observers to listen for when the download is done or if it fails
+        uploadTask.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(Exception exception) {
+                Toast.makeText(MainActivity.this,"FUCK YOU APP DEV NHI AATA TUJHE!!",Toast.LENGTH_SHORT).show();
+            }
+        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                // Handle successful uploads
+                Toast.makeText(MainActivity.this,"File Uploaded Successfully!",Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
 
     public void startLogging()
     {
@@ -206,7 +319,8 @@ public class MainActivity extends AppCompatActivity {
                         // check for permanent denial of any permission
                         if (multiplePermissionsReport.isAnyPermissionPermanentlyDenied()) {
                             // permission is denied permanently, we will show user a dialog message.
-                            showSettingsDialog();
+                            //showSettingsDialog();
+                            int a =0;
                         }
                     }
                     @Override
@@ -246,6 +360,18 @@ public class MainActivity extends AppCompatActivity {
         });
         // below line is used to display our dialog
         builder.show();
+    }
+
+    public void updateUI(FirebaseUser account){
+
+        if(account != null){
+            Toast.makeText(this,"You Signed In successfully",Toast.LENGTH_LONG).show();
+
+
+        }else {
+            Toast.makeText(this,"You Didnt signed in",Toast.LENGTH_LONG).show();
+        }
+
     }
 
 

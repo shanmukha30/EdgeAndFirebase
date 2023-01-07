@@ -53,9 +53,10 @@ public class LogWorker extends Worker {
         String filecontent=content;
         boolean res=false;
 
-        File file=new File(getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS),"DeviceInfo");
-        if(!file.mkdirs())
-            Log.e("Error: ","Directory not created");
+        File dirDown = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        File file = new File(dirDown, "DeviceInfo");
+        file.mkdirs();
+
         FileOutputStream outputStream;
         try{
             File file1=new File(file,filename);
