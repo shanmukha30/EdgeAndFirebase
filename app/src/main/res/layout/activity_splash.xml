@@ -10,6 +10,7 @@
         android:layout_height="400dp"
         android:layout_marginTop="10dp"
         android:alpha="1"
+        app:lottie_enableMergePathsForKitKatAndAbove="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

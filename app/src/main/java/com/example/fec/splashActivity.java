@@ -7,14 +7,20 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.airbnb.lottie.LottieAnimationView;
+
 public class splashActivity extends AppCompatActivity {
 
     TextView tv;
+    LottieAnimationView aniview;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
+
+        aniview = (LottieAnimationView) findViewById(R.id.animation_view2);
+        aniview.enableMergePathsForKitKatAndAbove(true);
 
         tv = findViewById(R.id.logger);
         tv.animate().translationYBy(60).setDuration(2000);

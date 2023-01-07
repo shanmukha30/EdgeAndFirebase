@@ -57,12 +57,12 @@ public class MainActivity extends AppCompatActivity {
 
         requestPermissions();
 
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+        /*if(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
             int temp = 0;
         }
         else {
-            ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},1);
-        }
+            ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},101);
+        }*/
 
         tv_info=(TextView)findViewById(R.id.main_tv_deviceInfo);
         btn_share=(Button)findViewById(R.id.main_btn_share);
