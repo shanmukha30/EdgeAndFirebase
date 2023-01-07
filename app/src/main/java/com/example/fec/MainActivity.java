@@ -60,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
     Button btn_stop,btn_share,btn_browser,btn_uploadExcel;
     SharedPreferences sp;
     Map<String,?>  deviceInfoMap;
+    public String deviceName;
     public  boolean isDeviceInfoFileWritten=false;
     public static final int cellCount=2;
 
@@ -95,33 +96,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
 
-        /*mAuth.signInAnonymously()
-                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if (task.isSuccessful()) {
-                            // Sign in success, update UI with the signed-in user's information
-                            Log.d(TAG, "signInAnonymously:success");
-                            FirebaseUser user = mAuth.getCurrentUser();
-                            updateUI(user);
-                        } else {
-                            // If sign in fails, display a message to the user.
-                            Log.w(TAG, "signInAnonymously:failure", task.getException());
-                            Toast.makeText(AnonymousAuthActivity.this, "Authentication failed.",
-                                    Toast.LENGTH_SHORT).show();
-                            updateUI(null);
-                        }
-                    }
-                });*/
-
-
-
-        /*if(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
-            int temp = 0;
-        }
-        else {
-            ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},101);
-        }*/
+        deviceName = String.valueOf(Build.DEVICE);
 
         tv_info=(TextView)findViewById(R.id.main_tv_deviceInfo);
         btn_share=(Button)findViewById(R.id.main_btn_share);
@@ -131,11 +106,12 @@ public class MainActivity extends AppCompatActivity {
         tv_guide=(TextView)findViewById(R.id.main_tv_guide);
         tv_guide.setText(R.string.guide);
         btn_uploadExcel = (Button) findViewById(R.id.excel);
+
         btn_browser.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Log.e("BROWSE","onclickcalled");
-                startBrower(v);
+                startBrowser(v);
             }
         });
         sp=getSharedPreferences("Device_Info",MODE_PRIVATE);
@@ -155,6 +131,7 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences sp=getSharedPreferences("Device_Info",MODE_PRIVATE);
         deviceInfoMap=sp.getAll();
         displayDeviceInfo();
+
         if(sp.getString("Device info logged?","").toString().equals("false"))
             writetofile();
 
@@ -167,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
         tv_info.setText(deviceInfoMap.toString());
     }
 
-    public void startBrower(View v)
+    public void startBrowser(View v)
     {
         Log.e("BROWSE","onclickcalled");
         Intent startBrowser=new Intent(Intent.ACTION_VIEW);
@@ -178,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
 
     void writetofile()
     {
-        String filename="deviceInfoFile.csv";
+        String filename="deviceInfoFile.txt";
         String filecontent=deviceInfoMap.toString();
         System.out.println(filecontent);
         SharedPreferences sp=getSharedPreferences("Device_Info",MODE_PRIVATE);
@@ -196,7 +173,6 @@ public class MainActivity extends AppCompatActivity {
             isDeviceInfoFileWritten = true;
             editor.putString("Device Info Logged","true");
             Toast.makeText(this,"Device Info logged to:"+String.valueOf(file1),Toast.LENGTH_LONG).show();
-            //isDeviceInfoFileWritten=true;
             tv_fileLocation.setText("Location of Log Files: "+String.valueOf(file1));
         }catch (Exception e)
         {
@@ -208,24 +184,8 @@ public class MainActivity extends AppCompatActivity {
     {
         File dirDown = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         File directory = new File(dirDown, "DeviceInfo");
-        /*File infoFile=new File(directory,"deviceInfoFile.txt");
-        File logFile=new File(directory,"deviceLogFile.csv");
-        Uri infoFileUri= FileProvider.getUriForFile(this,"com.example.fec.MainActivity",infoFile);
-        this.grantUriPermission("com.example.fec",infoFileUri,Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-        Uri logFileUri= FileProvider.getUriForFile(this,"com.example.fec.MainActivity",logFile);
-        this.grantUriPermission("com.example.fec",logFileUri,Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
 
-
-        ArrayList<Uri> fileUri=new ArrayList<Uri>();
-        fileUri.add(infoFileUri);
-        fileUri.add(logFileUri);
-
-        Intent shareIntent=new Intent();
-        shareIntent.setAction(Intent.ACTION_SEND_MULTIPLE);
-        shareIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM,fileUri);
-        shareIntent.setType("text/*");
-        startActivity(Intent.createChooser(shareIntent,"Send files..."));*/
-        File file = new File(directory, "deviceLogFile.csv");
+        File file = new File(directory, deviceName+"_log.csv");
 
         Intent shareIntent = new Intent();
         shareIntent.setAction(Intent.ACTION_SEND);
@@ -240,20 +200,15 @@ public class MainActivity extends AppCompatActivity {
         FirebaseStorage storage = FirebaseStorage.getInstance();
         File dirDown = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         File dir = new File(dirDown, "DeviceInfo");
-        File file = new File(dir, "deviceLogFile.csv");
+        File file = new File(dir, deviceName+"_log.csv");
 
         StorageReference storageRef = storage.getReference();
 
         // Create a reference to "mountains.jpg"
-        StorageReference deviceLogFileRef = storageRef.child("deviceLogFile.csv");
+        StorageReference deviceLogFileRef = storageRef.child(deviceName+"_log.csv");
 
         // Create a reference to 'images/mountains.jpg'
-        StorageReference filesRef = storageRef.child("files/deviceLogFile.csv");
-
-        deviceLogFileRef.getName().equals(filesRef.getName());
-        deviceLogFileRef.getPath().equals(filesRef.getPath());
-
-
+        StorageReference filesRef = storageRef.child("files/" + deviceName + "_log.csv");
 
         // Create the file metadata
         StorageMetadata metadata = new StorageMetadata.Builder()
@@ -265,7 +220,7 @@ public class MainActivity extends AppCompatActivity {
         // Register observers to listen for when the download is done or if it fails
         uploadTask.addOnFailureListener(new OnFailureListener() {
             @Override
-            public void onFailure(Exception exception) {
+            public void onFailure(@NonNull Exception exception) {
                 Toast.makeText(MainActivity.this,"FUCK YOU APP DEV NHI AATA TUJHE!!",Toast.LENGTH_SHORT).show();
             }
         }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
@@ -335,41 +290,14 @@ public class MainActivity extends AppCompatActivity {
                 // below line is use to run the permissions on same thread and to check the permissions
                 .onSameThread().check();
     }
-    private void showSettingsDialog() {
-        // we are displaying an alert dialog for permissions
-        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-
-        // below line is the title for our alert dialog.
-        builder.setTitle("Need Permissions");
-
-        // below line is our message for our dialog
-        builder.setMessage("This app needs permission to use this feature. You can grant them in app settings.");
-        builder.setPositiveButton("GOTO SETTINGS", (dialog, which) -> {
-            // this method is called on click on positive button and on clicking shit button
-            // we are redirecting our user from our app to the settings page of our app.
-            dialog.cancel();
-            // below is the intent from which we are redirecting our user.
-            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-            Uri uri = Uri.fromParts("package", getPackageName(), null);
-            intent.setData(uri);
-            startActivityForResult(intent, 101);
-        });
-        builder.setNegativeButton("Cancel", (dialog, which) -> {
-            // this method is called when user click on negative button.
-            dialog.cancel();
-        });
-        // below line is used to display our dialog
-        builder.show();
-    }
 
     public void updateUI(FirebaseUser account){
 
         if(account != null){
-            Toast.makeText(this,"You Signed In successfully",Toast.LENGTH_LONG).show();
-
-
-        }else {
-            Toast.makeText(this,"You Didnt signed in",Toast.LENGTH_LONG).show();
+            Log.e("Sign In Status: ","Successful");
+        }else
+        {
+            Log.e("Sign In Status: ","Filed");
         }
 
     }

@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.BatteryManager;
 import android.os.Environment;
+import android.os.Build;
 import android.os.StatFs;
 import android.util.Log;
 
@@ -49,12 +50,13 @@ public class LogWorker extends Worker {
 
     boolean writeCSVfile(String content)
     {
-        String filename="deviceLogFile.csv";
+        String deviceName = String.valueOf(Build.DEVICE);
+        String filename= deviceName+"_log.csv";
         String filecontent=content;
         boolean res=false;
 
         File dirDown = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-        File file = new File(dirDown, "DeviceInfo");
+        File file = new File(dirDown,"DeviceInfo");
         file.mkdirs();
 
         FileOutputStream outputStream;
