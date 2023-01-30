@@ -1,6 +1,7 @@
 package com.example.fec;
 
 import static android.content.Context.ACTIVITY_SERVICE;
+import static android.content.Context.SENSOR_SERVICE;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
@@ -10,6 +11,12 @@ import android.os.Environment;
 import android.os.Build;
 import android.os.StatFs;
 import android.util.Log;
+import android.hardware.SensorManager;
+import android.hardware.Sensor;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorEvent;
+import android.location.Location;
+import android.location.LocationManager;
 
 import androidx.annotation.NonNull;
 import androidx.work.WorkManager;
@@ -17,13 +24,17 @@ import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.BufferedReader;
 import java.io.RandomAccessFile;
 import java.text.DecimalFormat;
 import java.util.Calendar;
 
 public class LogWorker extends Worker {
 
+    //private SensorManager sensorManager;
+    //sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
     public LogWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
     }
@@ -31,16 +42,25 @@ public class LogWorker extends Worker {
     @NonNull
     @Override
     public Result doWork() {
+        //sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         String currTime=getCurrentTime();
         String batteryLevel=getBatteryLevel();
         String CPUfreq=getCurrentCPUFreqMHz();
         String availRAM=getCurrentRamUsage();
         String availStorage=getStorageInfo();
+        String CPUTemperature=getCPUTemperatureCelsius();
+        String acceleration=getAcceleration(getApplicationContext());
+        String distance=getDistance(getApplicationContext());
+
         String fileContent=currTime+", "+
                 batteryLevel+", "+
                 CPUfreq+", "+
                 availRAM+", "+
+                acceleration+", "+
+                distance+", "+
+                CPUTemperature+", "+
                 availStorage+";\n";
+
         boolean res=writeCSVfile(fileContent);
         if(res==true)
             return Result.success();
@@ -136,6 +156,75 @@ public class LogWorker extends Worker {
         long bytesAvailable=stat.getBlockSizeLong() * stat.getAvailableBlocksLong();
         long availableInKB=bytesAvailable /(1024);
         return String.valueOf(availableInKB);
+    }
+
+    public String getAcceleration(Context context)
+    {
+        SensorManager sensorManager;
+        sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
+        if (sensorManager == null)
+        {
+            Log.e("MainActivity", "Unable to get sensor service.");
+            return null;
+        }
+        Sensor accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        float[] acceleration = new float[3];
+        sensorManager.registerListener(new SensorEventListener()
+        {
+            @Override
+            public void onSensorChanged(SensorEvent event)
+            {
+                acceleration[0] = event.values[0];
+            }
+
+            @Override
+            public void onAccuracyChanged(Sensor sensor, int accuracy)
+            {
+                //do none
+            }
+        }
+        , accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        return String.valueOf(acceleration[0]);
+    }
+
+    public String getDistance(Context context)
+    {
+        LocationManager locationManager;
+        Location currentLocation;
+        locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        currentLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
+        double latitude = currentLocation.getLatitude();
+        double longitude = currentLocation.getLongitude();
+
+        Location startPoint=new Location("server");
+        startPoint.setLatitude(12.9691256369786);
+        startPoint.setLongitude(79.15590998754685);
+
+        Location endPoint=new Location("mobile");
+        endPoint.setLatitude(latitude);
+        endPoint.setLongitude(longitude);
+
+        double distance=startPoint.distanceTo(endPoint);
+        return String.valueOf(distance);
+    }
+
+    public String getCPUTemperatureCelsius()
+    {
+        int temp = 0;
+        try {
+            BufferedReader br = new BufferedReader(new FileReader("/sys/class/thermal/thermal_zone0/temp"));
+            String line;
+            if ((line = br.readLine()) != null) {
+                temp = Integer.parseInt(line);
+            }
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return String.valueOf(temp / 1000);
+
     }
 
 }
