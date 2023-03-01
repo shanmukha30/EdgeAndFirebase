@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.location.LocationRequest;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -51,6 +52,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.AuthResult;
+import com.google.firebase.FirebaseException;
+import com.google.firebase.storage.StorageException;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -63,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
     public String deviceName;
     public  boolean isDeviceInfoFileWritten=false;
     public static final int cellCount=2;
-
+    private LocationRequest locationRequest;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,8 +74,14 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         requestPermissions();
+        /*locationRequest = LocationRequest.create();
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        locationRequest.setInterval(5000);
+        locationRequest.setFastestInterval(2000);*/
+
 
         // Initialize Firebase Auth
+
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
 
         FirebaseUser user = mAuth.getCurrentUser();
@@ -80,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
         mAuth.signInAnonymously().addOnSuccessListener(this, new  OnSuccessListener<AuthResult>() {
                     @Override
                     public void onSuccess(AuthResult authResult) {
-                        Log.d("Topper", "signInAnonymously:success");
+                        Log.d("Firebase SignIn", "signInAnonymously:success");
                         FirebaseUser user = mAuth.getCurrentUser();
                         updateUI(user);
                     }
@@ -89,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onFailure(@NonNull Exception exception) {
 
-                        Log.e("Chutiya", "signInAnonymously:FAILURE", exception);
+                        Log.e("Firebase Signin", "signInAnonymously:FAILURE", exception);
                         Toast.makeText(MainActivity.this, "Authentication failed.",
                                 Toast.LENGTH_SHORT).show();
                         updateUI(null);
@@ -162,7 +171,11 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences.Editor editor=sp.edit();
         File dirDown = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         File file = new File(dirDown, "DeviceInfo");
-        file.mkdirs();
+        if (!file.exists()) {
+            file.mkdir();
+        } else {
+            System.out.println("File already exists.");
+        }
 
         FileOutputStream outputStream;
         try{
@@ -198,30 +211,74 @@ public class MainActivity extends AppCompatActivity {
     public void setBtn_uploadExcel(View v)
     {
         FirebaseStorage storage = FirebaseStorage.getInstance();
+        StorageReference storageRef = storage.getReference();
+
+        StorageReference deviceLogFileRef = storageRef.child(deviceName+"_log.csv");
+        StorageReference fileRef = storageRef.child("files/" + deviceName + "_log.csv");
+
+        fileRef.getMetadata().addOnSuccessListener(new OnSuccessListener<StorageMetadata>() {
+            @Override
+            public void onSuccess(StorageMetadata storageMetadata) {
+                // If the file exists, delete it
+                fileRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        // File deleted successfully
+                        // Now upload the new file
+                        uploadFile(storageRef);
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        // Failed to delete file
+                        Log.e("Deletion", "Failed to delete file", e);
+                    }
+                });
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                // If the file does not exist, upload a new file
+                if (e instanceof StorageException && ((StorageException) e).getErrorCode() == StorageException.ERROR_OBJECT_NOT_FOUND) {
+                    uploadFile(storageRef);
+                } else {
+                    // Failed to get file metadata
+                    Log.e("Search File", "Failed to get file metadata", e);
+                }
+            }
+        });
+
+
+        /*FirebaseStorage storage = FirebaseStorage.getInstance();
+        StorageReference storageRef = storage.getReference();
+        uploadFile(storageRef);*/
+
+    }
+
+    private void uploadFile(StorageReference storageRef) {
+        // Create a reference to the local file
         File dirDown = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         File dir = new File(dirDown, "DeviceInfo");
         File file = new File(dir, deviceName+"_log.csv");
 
-        StorageReference storageRef = storage.getReference();
-
-        // Create a reference to "mountains.jpg"
+        // Create a reference to "data.csv"
         StorageReference deviceLogFileRef = storageRef.child(deviceName+"_log.csv");
-
-        // Create a reference to 'images/mountains.jpg'
+        // Create a reference to 'files/data.csv'
         StorageReference filesRef = storageRef.child("files/" + deviceName + "_log.csv");
-
         // Create the file metadata
         StorageMetadata metadata = new StorageMetadata.Builder()
                 .setContentType("text/csv")
                 .build();
-        // Upload the file to Firebase
+
+        // Upload file to Firebase Storage
         UploadTask uploadTask = filesRef.putFile(Uri.fromFile(file), metadata);
 
         // Register observers to listen for when the download is done or if it fails
         uploadTask.addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception exception) {
-                Toast.makeText(MainActivity.this,"FUCK YOU APP DEV NHI AATA TUJHE!!",Toast.LENGTH_SHORT).show();
+                // Handle Failures
+                Toast.makeText(MainActivity.this,"Upload Failed",Toast.LENGTH_SHORT).show();
             }
         }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
@@ -231,7 +288,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-
 
     public void startLogging()
     {
@@ -262,7 +318,7 @@ public class MainActivity extends AppCompatActivity {
         // below line is use to request permission in the current activity.
         // this method is use to handle error in runtime permissions
         Dexter.withActivity(this)
-                .withPermissions(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.ACCESS_FINE_LOCATION)
+                .withPermissions(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
                 .withListener(new MultiplePermissionsListener() {
                     @Override
                     public void onPermissionsChecked(MultiplePermissionsReport multiplePermissionsReport) {
@@ -270,6 +326,16 @@ public class MainActivity extends AppCompatActivity {
                         if (multiplePermissionsReport.areAllPermissionsGranted()) {
                             // do you work now
                             Toast.makeText(MainActivity.this, "All the permissions are granted..", Toast.LENGTH_SHORT).show();
+                            if(Environment.isExternalStorageManager())
+                            {
+                               /* internal = new File("/sdcard");
+                                internalContents = internal.listFiles();*/
+                            }
+                            else
+                            {
+                                Intent permissionIntent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+                                startActivity(permissionIntent);
+                            }
                         }
                         // check for permanent denial of any permission
                         if (multiplePermissionsReport.isAnyPermissionPermanentlyDenied()) {

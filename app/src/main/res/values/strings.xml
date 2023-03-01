@@ -1,4 +1,8 @@
 <resources>
-    <string name="app_name">fec</string>
-    <string name="guide">This app uses background service of Android to write parameter values in log files. Most of the device manufacturers employ their own battery savers.</string>
+    <string name="app_name">Logger</string>
+    <string name="guide">This app uses background service of Android to write parameter values in log files. Most of the device manufacturers employ their own battery savers.
+    </string>
+    <string name="login_email_hint">Email</string>
+    <string name="login_password_hint">Password</string>
+    <string name="forgot_password">Forgot Password?</string>
 </resources>
